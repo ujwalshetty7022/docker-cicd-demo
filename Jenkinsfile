@@ -1,6 +1,7 @@
+```groovy
 pipeline {
 
-    agent any
+    agent none
 
     environment {
         IMAGE_NAME = "mywebsite"
@@ -10,8 +11,15 @@ pipeline {
     stages {
 
         stage('Clone') {
+
+            agent {
+                label 'built-in'
+            }
+
             steps {
-                echo 'Cloning source code...'
+                echo '================================='
+                echo 'Cloning source code on Controller'
+                echo '================================='
 
                 git branch: 'main',
                     url: 'https://github.com/ujwalshetty7022/docker-cicd-demo.git'
@@ -19,31 +27,66 @@ pipeline {
         }
 
         stage('Test') {
+
+            agent {
+                label 'built-in'
+            }
+
             steps {
-                echo 'Testing application...'
+                echo '================================='
+                echo 'Testing application on Controller'
+                echo '================================='
 
                 sh '''
                     test -f index.html
                     test -f Dockerfile
                 '''
+
+                echo 'Application tests passed!'
             }
         }
 
-        stage('Docker Build') {
+        stage('Deploy Agent 1') {
+
+            agent {
+                label 'deploy-agent-1'
+            }
+
             steps {
-                echo 'Building Docker image...'
+                echo '================================='
+                echo 'Deploying to Agent 1'
+                echo 'IP: 172.31.1.111'
+                echo '================================='
 
                 sh '''
                     docker build -t ${IMAGE_NAME}:latest .
+
+                    docker rm -f ${CONTAINER_NAME} 2>/dev/null || true
+
+                    docker run -d \
+                        --name ${CONTAINER_NAME} \
+                        --restart unless-stopped \
+                        -p 80:80 \
+                        ${IMAGE_NAME}:latest
                 '''
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Agent 2') {
+
+            agent {
+                label 'deploy-agent-2'
+            }
+
             steps {
-                echo 'Deploying application...'
+                echo '================================='
+                echo 'Deploying to Agent 2'
+                echo 'IP: 172.31.1.74'
+                echo '================================='
 
                 sh '''
+                    docker build -t ${IMAGE_NAME}:latest .
+
                     docker rm -f ${CONTAINER_NAME} 2>/dev/null || true
 
                     docker run -d \
@@ -60,7 +103,7 @@ pipeline {
 
         success {
             echo '================================='
-            echo 'Deployment Successful!'
+            echo 'Distributed Deployment Successful!'
             echo '================================='
         }
 
@@ -71,3 +114,4 @@ pipeline {
         }
     }
 }
+```
