@@ -26,7 +26,7 @@ pipeline {
 
                 stash name: 'application',
                       includes: '**/*',
-                      useDefaultExcludes: false
+                      excludes: '.git/**'
             }
         }
 
