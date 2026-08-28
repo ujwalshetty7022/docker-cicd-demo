@@ -16,12 +16,17 @@ pipeline {
             }
 
             steps {
+
                 echo '================================='
                 echo 'Cloning source code on Controller'
                 echo '================================='
 
                 git branch: 'main',
                     url: 'https://github.com/ujwalshetty7022/docker-cicd-demo.git'
+
+                stash name: 'application',
+                      includes: '**/*',
+                      useDefaultExcludes: false
             }
         }
 
@@ -32,6 +37,7 @@ pipeline {
             }
 
             steps {
+
                 echo '================================='
                 echo 'Testing application on Controller'
                 echo '================================='
@@ -52,10 +58,13 @@ pipeline {
             }
 
             steps {
+
                 echo '================================='
                 echo 'Deploying to Agent 1'
                 echo 'IP: 172.31.1.111'
                 echo '================================='
+
+                unstash 'application'
 
                 sh '''
                     docker build -t ${IMAGE_NAME}:latest .
@@ -78,10 +87,13 @@ pipeline {
             }
 
             steps {
+
                 echo '================================='
                 echo 'Deploying to Agent 2'
                 echo 'IP: 172.31.1.74'
                 echo '================================='
+
+                unstash 'application'
 
                 sh '''
                     docker build -t ${IMAGE_NAME}:latest .
